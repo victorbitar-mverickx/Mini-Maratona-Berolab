@@ -80,10 +80,45 @@ pip install -r requirements.txt
 ```bash
 python main.py
 ```
-
-*(Se o arquivo principal tiver outro nome, como `game.py`, use esse nome no comando.)*
-
 ---
+
+## 🎯 Sua Missão: Conserte e Evolua o Jogo!
+
+Para tornar o aprendizado mais prático e divertido, este projeto foi deixado "quebrado" de propósito. Sua tarefa não é apenas encontrar os bugs, mas também evoluir o código. Pense nisso como um quebra-cabeça e uma oportunidade de mostrar sua criatividade!
+
+### Tarefas Principais
+
+* **Corrigir a Lógica Central:** Sua primeira missão é investigar o código para encontrar e consertar os problemas existentes. A colisão não funciona como deveria? O placar não atualiza corretamente? O personagem se move de forma estranha? Seja o(a) detetive e arrume a casa!
+* **Adicionar Novas Funcionalidades:** Depois de consertar o básico, é hora de dar o seu toque especial. Um jogo se torna único com features criativas.
+
+### ✨ Sugestões de Novas Features (para se inspirar)
+
+* Adicionar efeitos sonoros (para movimento, pontuação, game over, etc.).
+* Criar uma tela de início com um botão "Jogar" e o título do jogo.
+* Implementar um sistema de "Jogar Novamente" que aparece após o fim da partida.
+* Fazer a dificuldade aumentar com o tempo (por exemplo, a velocidade do jogo aumenta a cada 10 pontos).
+* Salvar a pontuação mais alta (High Score) em um arquivo de texto para que ela persista entre as partidas.
+
+### ✅ Critérios para uma Boa Avaliação
+
+Seu **Pull Request** (sua proposta de contribuição) será analisado com carinho, e vamos levar em conta os seguintes pontos. Não se preocupe em ser perfeito, o esforço no aprendizado é o mais importante!
+
+* **Funcionalidade:**
+    * O jogo funciona como esperado após suas correções?
+    * As novas features que você adicionou estão operando sem introduzir novos bugs?
+
+* **Qualidade do Código:**
+    * Seu código está legível e bem organizado?
+    * Você usou nomes de variáveis claros e fáceis de entender (ex: `player_score` em vez de `ps`)?
+
+* **Comentários no Código:**
+    * Você comentou as partes mais importantes ou complexas do seu novo código para explicar o que elas fazem? Isso ajuda muito quem vai ler seu código no futuro.
+
+* **Clareza nos Commits do Git:**
+    * As mensagens dos seus commits são claras e descritivas? (ex: "Feat: Adiciona sistema de som para o jogador" em vez de "arquivos atualizados").
+
+* **Criatividade e Esforço:**
+    * Você foi além do básico? Tentou implementar algo que não estava na lista de sugestões? O esforço para aprender e aplicar novos conceitos será muito valorizado!
 
 ## 🤝 Como Contribuir
 
@@ -110,4 +145,4 @@ python main.py
 
 ---
 
-Parabéns por chegar até aqui! **Divirta‑se programando e jogando!** 🐍
+Parabéns por chegar até aqui! **Divirta‑se programando e jogando! Boa sorte!** 🐍
