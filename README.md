@@ -3,7 +3,7 @@
 Bem‑vindo(a) à mini-maratona! Este é um espaço criado especialmente para quem está começando no mundo da programação. Para deixar as coisas mais animadas, vamos desenvolver em **Python** e no desenvolvimento de jogos com a biblioteca **Pygame**.
 
 ---
-
+    
 ## O que é Pygame?
 
 [Pygame](https://www.pygame.org/news) é um conjunto de módulos Python projetado para escrever videogames. Ele adiciona funcionalidades sobre a biblioteca **SDL**, permitindo que você crie jogos e programas multimídia ricos em recursos, de forma simples e divertida.
