@@ -9,7 +9,7 @@ Bem‑vindo(a) à mini-maratona! Este é um espaço criado especialmente para qu
 [Pygame](https://www.pygame.org/news) é um conjunto de módulos Python projetado para escrever videogames. Ele adiciona funcionalidades sobre a biblioteca **SDL**, permitindo que você crie jogos e programas multimídia ricos em recursos, de forma simples e divertida.
 
 ---
-
+<br>
 ## 📋 Pré‑requisitos
 
 Antes de começar, garanta que você tenha **todos** os softwares a seguir instalados na sua máquina:
