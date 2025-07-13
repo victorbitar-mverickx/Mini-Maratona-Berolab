@@ -18,9 +18,23 @@ diretorio_sons = os.path.join(diretorio_principal, 'assets', 'sounds')
 
 diretorio_imagens_cactus = os.path.join(diretorio_principal, 'dino_runner', 'assets', 'Cactus')
 
+
 # == INICIALIZAÇÃO DO PYGAME E DA TELA ==
 
 pygame.init()
+pygame.mixer.init()  # add a musiquinha de fundo
+# Caminho da música
+caminho_musica = os.path.join(diretorio_principal, 'dino_runner', 'intermission_loop_b.mp3') 
+diretorio_sons = os.path.join(diretorio_principal, 'dino_runner') # 'sons_score_sound.wav' está direto na pasta 'dino_runner'
+
+som_pontuacao = pygame.mixer.Sound(os.path.join(diretorio_sons, 'sons_score_sound.wav'))
+som_pontuacao.set_volume(0.8)  # Ajusta o volume (opcional)
+
+# Carrega e toca a música em loop
+pygame.mixer.music.load(caminho_musica)
+pygame.mixer.music.set_volume(0.5)  # Volume entre 0.0 e 1.0
+pygame.mixer.music.play(-1)  # -1 = toca em loop infinito
+
 
 largura = 1280  # Largura da tela
 altura = 540  # Altura da tela
@@ -291,7 +305,10 @@ while True:
                     velocidade_jogo += 1
                     ultimo_marco = pontos
                     atualizar_spawn_obstaculos()  # Atualiza o intervalo dos oBstaculos
+                    som_pontuacao.play()
                     print(f"Velocidade aumentada para: {velocidade_jogo}")
+                    
+
                 
                 
                 if pygame.sprite.spritecollideany(dino, obstacles):
