@@ -9,6 +9,7 @@ largura = 640
 altura = 480
 x = largura // 2 - 50  # Centralizando o retângulo na tela
 y = altura  // 2 - 50  # Centralizando o retângulo na tela
+     
 
 tela = pygame.display.set_mode((largura, altura)) #CRiAndo a tela
 pygame.display.set_caption("Dinobero")  # Definindo o nome da janela

@@ -2,24 +2,308 @@ from dino_runner.components.game import Game
 import pygame
 from pygame.locals import *
 from sys import exit
+import os
+import random # Importado para a classe Nuvens
+
+# == DIRETÓRIOS E IMAGENS ==
+diretorio_principal = os.path.dirname(__file__)
+
+# Caminho para a pasta de imagens do Dino (onde 'DinoRun' está)
+diretorio_imagens_dino = os.path.join(diretorio_principal, 'dino_runner', 'assets', 'Dino') 
+
+# Caminho para a pasta 'Other' (onde 'Cloud.png', 'Track.png' estão)
+diretorio_outros_assets = os.path.join(diretorio_principal, 'dino_runner', 'assets', 'Other')
+
+diretorio_sons = os.path.join(diretorio_principal, 'assets', 'sounds')
+
+diretorio_imagens_cactus = os.path.join(diretorio_principal, 'dino_runner', 'assets', 'Cactus')
+
+# == INICIALIZAÇÃO DO PYGAME E DA TELA ==
 
 pygame.init()
 
-largura = 640 #eixo y
-altura = 480 #eixo x
+largura = 1280  # Largura da tela
+altura = 540  # Altura da tela
 
-tela = pygame.display.set_mode((largura, altura)) #CRiAndo a tela
-pygame.display.set_caption("Dinobero")  # Definindo o nome da janela
+tela = pygame.display.set_mode((largura, altura))
+pygame.display.set_caption("Dinobero")
 
+game_over_imagem = pygame.image.load(os.path.join(diretorio_outros_assets, 'GameOver.png')).convert_alpha()
+
+reset_imagem = pygame.image.load(os.path.join(diretorio_outros_assets, 'Reset.png')).convert_alpha()
+
+dino_menu_imagem = pygame.image.load(os.path.join(diretorio_outros_assets, 'Teste.png')).convert_alpha()
+GAME_STATE = "MENU" # Definimos que o jogo começa no estado de MENU
+
+SEQUENCIA_OBSTACULOS = [
+    'cacto', 'passaro', 'cacto', 'cacto', 'passaro', 
+    'cacto', 'passaro', 'cacto', 'cacto', 'passaro',
+    'cacto', 'cacto', 'passaro', 'cacto', 'passaro',
+
+]
+indice_obstaculo_atual = 0 
+SPAWN_OBSTACLE = pygame.USEREVENT + 1 
+pygame.time.set_timer(SPAWN_OBSTACLE, 2000) 
+
+
+# == CLASSES DINOSSAURO ==
+
+class Dino(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+
+        self.imagens_dinossauro = []
+        # CORREÇÃO: Usando a variável correta "diretorio_imagens_dino"
+        self.imagens_dinossauro.append(pygame.image.load(os.path.join(diretorio_imagens_dino, 'DinoRun1.png')).convert_alpha())
+        self.imagens_dinossauro.append(pygame.image.load(os.path.join(diretorio_imagens_dino, 'DinoRun2.png')).convert_alpha())
+
+        
+        self.index_lista = 0
+        self.image = self.imagens_dinossauro[int(self.index_lista)]
+        self.rect = self.image.get_rect()
+    
+        self.rect.center = (100, altura - 50) # Posição inicial
+        self.pulo = False
+        self.velocidade_pulo = 0.8# Velocidade atual do pulo
+        self.forca_pulo = 9# Força inicial do pulo, ajuste esse valor!
+        self.posicao_chao_y = altura - 50 # Y onde o Dino 'aterra' (o mesmo valor de rect.center[1] inicial)
+
+    
+
+    def update(self):
+        if self.index_lista >= len(self.imagens_dinossauro):
+            self.index_lista = 0
+
+        self.image = self.imagens_dinossauro[int(self.index_lista)]
+        self.index_lista += 0.25
+        
+        if self.pulo:
+            # Se o Dino está pulando, atualiza a posição Y
+            self.rect.y -= self.velocidade_pulo
+            
+            # Atualiza a velocidade do pulo (simulando gravidade)
+            self.velocidade_pulo -= 0.2 # A velocidade diminui a cada frame
+            
+            if self.rect.center[1] >= self.posicao_chao_y: # Verifica se o centro Y passou do chão
+                self.rect.center = (100, self.posicao_chao_y) # Retorna o Dino para o chão
+                self.pulo = False # Não está mais pulando
+                self.velocidade_pulo = 0
+        
+    def pular(self):
+        if not self.pulo:  # Só pula se não estiver pulando
+            self.pulo = True
+            self.velocidade_pulo = self.forca_pulo  # Reseta a velocidade do pulo para a força inicial
+
+# == Classes bibibibobobo ==
+def exibir_mensagem(msg, cor, tamanho):
+    fonte = pygame.font.SysFont('Arial', tamanho,True, False)
+    mensagem = f'{msg}'
+    texto_formatado = fonte.render(mensagem, True, cor)
+    return texto_formatado
+class Nuvens(pygame.sprite.Sprite):
+    def __init__(self, largura_tela, altura_tela):
+        super().__init__()
+        
+        # Carrega a imagem da nuvem da pasta 'Other'
+        self.image = pygame.image.load(os.path.join(diretorio_outros_assets, 'Cloud.png')).convert_alpha()
+        self.rect = self.image.get_rect()
+        
+        # CORREÇÃO: Posição inicial da nuvem para começar VISÍVEL na tela
+        # Ela vai começar em algum lugar na metade direita da tela
+        self.rect.x = random.randint(0, largura_tela + 300) 
+        self.rect.y = random.randint(50, altura_tela // 3)
+
+    def update(self):
+        # Move a nuvem para a esquerda
+        self.rect.x -= 2 
+        
+        # Se a nuvem saiu da tela pela esquerda, reposicione-a na direita
+        if self.rect.right < 0:
+            self.rect.x = largura + random.randint(50, 300) # Volta para fora da tela
+            self.rect.y = random.randint(50, altura // 3)
+
+class Track(pygame.sprite.Sprite):
+    def __init__(self, largura_tela, altura_tela, Track_x):
+        super().__init__() #Carrega o chão
+        self.image = pygame.image.load(os.path.join(diretorio_outros_assets, 'Track.png')).convert_alpha()
+        self.rect = self.image.get_rect()
+
+        self.rect.x = Track_x  # Começa na posição Track_x
+        self.rect.y = altura_tela - self.rect.height // 2 - 20 # Posição Y ajustada para o Dino
+
+    def update(self):
+        self.rect.x -= 5 # Use a mesma velocidade das nuvens para manter a consistência
+        if self.rect.right < 0:
+            self.rect.x += self.image.get_width() * 2 
+class Cactus(pygame.sprite.Sprite):
+    def __init__(self, largura_tela, altura_tela):
+        super().__init__()
+        self.images = []
+        self.images.append(pygame.image.load(os.path.join(diretorio_imagens_cactus, 'SmallCactus1.png')).convert_alpha())
+        self.images.append(pygame.image.load(os.path.join(diretorio_imagens_cactus, 'SmallCactus2.png')).convert_alpha())
+        self.images.append(pygame.image.load(os.path.join(diretorio_imagens_cactus, 'SmallCactus3.png')).convert_alpha())
+
+        # Carregar todas as imagens de cacto grande
+        self.images.append(pygame.image.load(os.path.join(diretorio_imagens_cactus, 'LargeCactus1.png')).convert_alpha())
+        self.images.append(pygame.image.load(os.path.join(diretorio_imagens_cactus, 'LargeCactus2.png')).convert_alpha())
+        self.images.append(pygame.image.load(os.path.join(diretorio_imagens_cactus, 'LargeCactus3.png')).convert_alpha())
+
+        # Escolhe uma imagem de cacto aleatoriamente
+        self.image = random.choice(self.images)
+        self.rect = self.image.get_rect()
+
+        self.rect.x = largura_tela + random.randint(50, 200)  
+        self.rect.bottom = altura_tela - 17 
+    def update(self):
+        self.rect.x -= 5 # Move o cacto para a esquerda
+        
+        # Se o cacto sair completamente da tela, remove-o
+        if self.rect.right < 0:
+         self.kill() # Remove o sprite de todos os grupos
+
+
+class Bird(pygame.sprite.Sprite):
+    def __init__(self, largura_tela, altura_tela):
+        super().__init__()
+        self.images = []
+        self.images.append(pygame.image.load(os.path.join(diretorio_principal, 'dino_runner', 'assets', 'Bird', 'Bird1.png')).convert_alpha()) # Correção do caminho
+        self.images.append(pygame.image.load(os.path.join(diretorio_principal, 'dino_runner', 'assets', 'Bird', 'Bird2.png')).convert_alpha()) # Correção do caminho   
+        
+        self.index_lista = 0
+        self.image = self.images[int(self.index_lista)] 
+        self.rect = self.image.get_rect()   
+        self.rect.x = largura_tela + random.randint(20, 500)
+        self.rect.y = random.randint(50, altura_tela // 2)  # Posição Y aleatória para a ave    
+
+    def update(self):
+        if self.index_lista >= len(self.images):
+           self.index_lista = 0
+
+        self.image = self.images[int(self.index_lista)]
+        self.index_lista += 0.1
+            
+            # Move a ave para a esquerda
+        self.rect.x -= 5
+            
+            # Se a ave sair completamente da tela, reposicione-a
+        if self.rect.right < 0:
+            self.kill()  # Remove a ave de todos os grupos
+
+# == INICIALIZAÇÃO DO JOGO == 
+
+todas_as_sprites = pygame.sprite.Group()
+dino = Dino()
+todas_as_sprites.add(dino)
+
+obstacles = pygame.sprite.Group()
+
+largura_da_pista = pygame.image.load(os.path.join(diretorio_outros_assets, 'Track.png')).get_width()
+
+for _ in range(12):  # Adiciona 12 nuvens
+ nuvem1 = Nuvens(largura, altura)
+ todas_as_sprites.add(nuvem1)
+
+
+pista1 = Track(largura, altura, 0)
+pista2 = Track(largura, altura, largura_da_pista)
+
+todas_as_sprites.add(pista1)
+todas_as_sprites.add(pista2)
+
+
+
+relogio = pygame.time.Clock()
+
+# ==APORRA DO WHILE==
+# == LOOP PRINCIPAL DO JOGO ==
 while True:
+    relogio.tick(60) # Mantém a taxa de quadros (FPS) 
+
+    # == TRATAMENTO DE EVENTOS ==
     for event in pygame.event.get():
-        if event.type == QUIT:
+        if event.type == QUIT: # Se o usuário clicar para fechar a janela
             pygame.quit()
             exit()
-    pygame.display.update()  # Atualizando a tela  do joguinho
+        
+        # --- Lógica de Eventos baseada no Estado do Jogo ---
+        if GAME_STATE == "MENU":
+            if event.type == KEYDOWN: # Se qualquer tecla for pressionada no MENU
+                GAME_STATE = "PLAYING" # Muda para o estado de JOGANDO
+                should_start_game = True # Variável para reiniciar o jogo
+                
+                dino.rect.center = (100, altura - 50)
+                dino.pulo = False
+                dino.velocidade_pulo = 0 # Garante que a velocidade do pulo é zero ao reiniciar
+                
+                
+                obstacles.empty() # Limpa os obstáculos do jogo
+                
+                indice_obstaculo_atual = 0 # Reseta o índice de obstáculos  
+                
+                # Reposicionar a pista para que comece do zero
+                pista1.rect.x = 0
+                pista2.rect.x = largura_da_pista
+                pygame.time.set_timer(SPAWN_OBSTACLE, 2000) # Inicia o spawn de obstáculos
 
-if __name__ == "__main__":
-    game = Game()
-    game.run()
+        elif GAME_STATE == "PLAYING": # Se o jogo está no estado de JOGANDO
+           if event.type == SPAWN_OBSTACLE: # Evento para spawnar obstáculos
+                if indice_obstaculo_atual < len(SEQUENCIA_OBSTACULOS):
+                    proximo_tipo_obstaculo = SEQUENCIA_OBSTACULOS[indice_obstaculo_atual]
+                    if proximo_tipo_obstaculo == 'cacto':
+                        novo_obstaculo = Cactus(largura, altura)
+                    elif proximo_tipo_obstaculo == 'passaro':
+                        novo_obstaculo = Bird(largura, altura)
+                    
+                    todas_as_sprites.add(novo_obstaculo)
+                    obstacles.add(novo_obstaculo) # Adiciona o novo obstáculo ao grupo de obstáculos
+                    indice_obstaculo_atual += 1 # Incrementa o índice para o próximo
+                else:
+                    print("Todos os obstáculos foram gerados!")
+        
+        if event.type == KEYDOWN:
+                if event.key == K_SPACE: # Pressionou ESPAÇO para pular
+                    dino.pular()
+        
+        elif GAME_STATE == "GAME_OVER":
+       
+            if event.type == KEYDOWN: # Se qualquer tecla for pressionada no GAME_OVER
+              pygame.time.set_timer(SPAWN_OBSTACLE, 0) # Para o spawn de obstáculos 
 
+    # == LÓGICA DE ATUALIZAÇÃO E DESENHO BASEADA NO ESTADO DO JOGO ==
+    tela.fill((255, 255, 255)) # Preenche a tela com branco (fundo)
 
+    if GAME_STATE == "MENU":
+        
+       
+
+        dino_menu_rect = dino_menu_imagem.get_rect(center=(largura // 2, altura // 2 - 50)) # Ajuste Y para mover para cima/baixo
+        tela.blit(dino_menu_imagem, dino_menu_rect)
+
+        # Desenha o texto "Pressione Qualquer Tecla para Começar"
+        fonte_menu = pygame.font.Font(None, 40) # Fonte padrão, tamanho 40
+        texto_menu = fonte_menu.render("Pressione Qualquer Tecla para Começar", True, (0, 0, 0)) # Texto em português, cor preta
+        
+        texto_rect_menu = texto_menu.get_rect(center=(largura // 2, altura // 2 + 50)) # Posição abaixo da imagem
+        tela.blit(texto_menu, texto_rect_menu)
+
+    elif GAME_STATE == "PLAYING":
+        todas_as_sprites.draw(tela) # Desenha todas as sprites (Dino, Nuvens, Pista, Cactos)
+        todas_as_sprites.update() # Atualiza a lógica de movimento e animação de todas as sprites
+       
+        if pygame.sprite.spritecollideany(dino, obstacles):
+            GAME_STATE = "GAME_OVER"
+            print("Game Over!")
+        
+
+    elif GAME_STATE == "GAME_OVER":
+        game_over_rect = game_over_imagem.get_rect(center=(largura // 2, altura // 2 - 50))
+        tela.blit(game_over_imagem, game_over_rect)
+        reset_rect = reset_imagem.get_rect(center=(largura // 2, altura // 2 + 50))
+        tela.blit(reset_imagem, reset_rect)
+    else:
+        pontos +=1
+        todas_as_sprites.update() # Atualiza a lógica de movimento e animação de todas as sprites
+        texto_pontos =exibir_mensagem (pontos,40,(0, 0, 0), tela) # Exibe a pontuação na tela
+
+    tela.blit(texto_pontos,(520,30))
+    pygame.display.flip()
