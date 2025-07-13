@@ -44,9 +44,18 @@ SEQUENCIA_OBSTACULOS = [
 indice_obstaculo_atual = 0 
 SPAWN_OBSTACLE = pygame.USEREVENT + 1 
 pygame.time.set_timer(SPAWN_OBSTACLE, 2000) 
+velocidade_jogo = 5
+ultimo_marco = 0  # Variável para controlar o último marco atingido
+recorde = 0
+
+def atualizar_spawn_obstaculos():
+    intervalo = max(400, 2000 - (velocidade_jogo * 100))  # Diminui com a velocidade, mínimo 400ms
+    pygame.time.set_timer(SPAWN_OBSTACLE, intervalo)
+
 
 
 # == CLASSES DINOSSAURO ==
+
 
 class Dino(pygame.sprite.Sprite):
     def __init__(self):
@@ -63,9 +72,10 @@ class Dino(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
     
         self.rect.center = (100, altura - 50) # Posição inicial
+        self.rect.inflate_ip(-30, -10)  # Ajusta o tamanho do retângulo para o Dino
         self.pulo = False
-        self.velocidade_pulo = 0.8# Velocidade atual do pulo
-        self.forca_pulo = 9# Força inicial do pulo, ajuste esse valor!
+        self.velocidade_pulo = 5.25# Velocidade atual do pulo
+        self.forca_pulo = 15# Força inicial do pulo, ajuste esse valor!
         self.posicao_chao_y = altura - 50 # Y onde o Dino 'aterra' (o mesmo valor de rect.center[1] inicial)
 
     
@@ -82,7 +92,7 @@ class Dino(pygame.sprite.Sprite):
             self.rect.y -= self.velocidade_pulo
             
             # Atualiza a velocidade do pulo (simulando gravidade)
-            self.velocidade_pulo -= 0.2 # A velocidade diminui a cada frame
+            self.velocidade_pulo -= 0.5 # A velocidade diminui a cada frame
             
             if self.rect.center[1] >= self.posicao_chao_y: # Verifica se o centro Y passou do chão
                 self.rect.center = (100, self.posicao_chao_y) # Retorna o Dino para o chão
@@ -132,7 +142,8 @@ class Track(pygame.sprite.Sprite):
         self.rect.y = altura_tela - self.rect.height // 2 - 20 # Posição Y ajustada para o Dino
 
     def update(self):
-        self.rect.x -= 5 # Use a mesma velocidade das nuvens para manter a consistência
+        global velocidade_jogo
+        self.rect.x -= velocidade_jogo # Use a mesma velocidade das nuvens para manter a consistência
         if self.rect.right < 0:
             self.rect.x += self.image.get_width() * 2 
 class Cactus(pygame.sprite.Sprite):
@@ -155,7 +166,8 @@ class Cactus(pygame.sprite.Sprite):
         self.rect.x = largura_tela + random.randint(50, 200)  
         self.rect.bottom = altura_tela - 17 
     def update(self):
-        self.rect.x -= 5 # Move o cacto para a esquerda
+        global velocidade_jogo
+        self.rect.x -= velocidade_jogo # Move o cacto para a esquerda
         
         # Se o cacto sair completamente da tela, remove-o
         if self.rect.right < 0:
@@ -176,14 +188,15 @@ class Bird(pygame.sprite.Sprite):
         self.rect.y = random.randint(50, altura_tela // 2)  # Posição Y aleatória para a ave    
 
     def update(self):
+        global velocidade_jogo
         if self.index_lista >= len(self.images):
            self.index_lista = 0
 
         self.image = self.images[int(self.index_lista)]
         self.index_lista += 0.1
             
-            # Move a ave para a esquerda
-        self.rect.x -= 5
+        
+        self.rect.x -= velocidade_jogo
             
             # Se a ave sair completamente da tela, reposicione-a
         if self.rect.right < 0:
@@ -210,9 +223,14 @@ pista2 = Track(largura, altura, largura_da_pista)
 todas_as_sprites.add(pista1)
 todas_as_sprites.add(pista2)
 
+velocidade_jogo = 5  # Começa com velocidade padrão
+
+
 
 
 relogio = pygame.time.Clock()
+pontos = 0
+contador_pontos = 0
 
 # ==APORRA DO WHILE==
 # == LOOP PRINCIPAL DO JOGO ==
@@ -243,32 +261,81 @@ while True:
                 # Reposicionar a pista para que comece do zero
                 pista1.rect.x = 0
                 pista2.rect.x = largura_da_pista
-                pygame.time.set_timer(SPAWN_OBSTACLE, 2000) # Inicia o spawn de obstáculos
+                atualizar_spawn_obstaculos()
 
         elif GAME_STATE == "PLAYING": # Se o jogo está no estado de JOGANDO
            if event.type == SPAWN_OBSTACLE: # Evento para spawnar obstáculos
-                if indice_obstaculo_atual < len(SEQUENCIA_OBSTACULOS):
-                    proximo_tipo_obstaculo = SEQUENCIA_OBSTACULOS[indice_obstaculo_atual]
-                    if proximo_tipo_obstaculo == 'cacto':
-                        novo_obstaculo = Cactus(largura, altura)
-                    elif proximo_tipo_obstaculo == 'passaro':
-                        novo_obstaculo = Bird(largura, altura)
+                if indice_obstaculo_atual >= len(SEQUENCIA_OBSTACULOS):
+                    indice_obstaculo_atual = 0
+
+                proximo_tipo_obstaculo = SEQUENCIA_OBSTACULOS[indice_obstaculo_atual]
+
+                if proximo_tipo_obstaculo == 'cacto':
+                    novo_obstaculo = Cactus(largura, altura)
+                elif proximo_tipo_obstaculo == 'passaro':
+                    novo_obstaculo = Bird(largura, altura)
                     
-                    todas_as_sprites.add(novo_obstaculo)
-                    obstacles.add(novo_obstaculo) # Adiciona o novo obstáculo ao grupo de obstáculos
-                    indice_obstaculo_atual += 1 # Incrementa o índice para o próximo
-                else:
-                    print("Todos os obstáculos foram gerados!")
+                todas_as_sprites.add(novo_obstaculo)
+                obstacles.add(novo_obstaculo)
+                indice_obstaculo_atual += 1 # Incrementa o índice para o próximo
+
+                contador_pontos += 1
+                if contador_pontos >= 10:  # A cada 10 frames
+                    pontos += 1
+                    contador_pontos = 0
+
+                    texto_pontos = exibir_mensagem(f"Pontos: {pontos}", (0, 0, 0), 30)
+                    tela.blit(texto_pontos, (largura - 200, 30))
+            # Aumenta a velocidade a cada 100 pontos
+                if pontos >= ultimo_marco + 100:
+                    velocidade_jogo += 1
+                    ultimo_marco = pontos
+                    atualizar_spawn_obstaculos()  # Atualiza o intervalo dos oBstaculos
+                    print(f"Velocidade aumentada para: {velocidade_jogo}")
+                
+                
+                if pygame.sprite.spritecollideany(dino, obstacles):
+                   GAME_STATE = "GAME_OVER"
+                   print("Game Over!")
         
         if event.type == KEYDOWN:
+            if GAME_STATE == "PLAYING":  # Se o jogo está em andamento
                 if event.key == K_SPACE: # Pressionou ESPAÇO para pular
-                    dino.pular()
+                   dino.pular()
         
-        elif GAME_STATE == "GAME_OVER":
-       
-            if event.type == KEYDOWN: # Se qualquer tecla for pressionada no GAME_OVER
-              pygame.time.set_timer(SPAWN_OBSTACLE, 0) # Para o spawn de obstáculos 
+            elif GAME_STATE == "GAME_OVER":
+                GAME_STATE = "PLAYING"
+                should_start_game = True
 
+                dino.rect.center = (100, altura - 50)
+                dino.pulo = False
+                dino.velocidade_pulo = 0
+                
+
+                pontos = 0
+                contador_pontos = 0
+                indice_obstaculo_atual = 0
+                velocidade_jogo = 5
+                ultimo_marco = 0
+
+                obstacles.empty()
+                todas_as_sprites.empty()
+
+        
+                todas_as_sprites.add(dino)
+
+                for _ in range(12):
+                    nuvem = Nuvens(largura, altura)
+                    todas_as_sprites.add(nuvem)
+
+                pista1.rect.x = 0
+                pista2.rect.x = largura_da_pista
+                todas_as_sprites.add(pista1)
+                todas_as_sprites.add(pista2)
+
+                pygame.time.set_timer(SPAWN_OBSTACLE, 2000)
+
+           
     # == LÓGICA DE ATUALIZAÇÃO E DESENHO BASEADA NO ESTADO DO JOGO ==
     tela.fill((255, 255, 255)) # Preenche a tela com branco (fundo)
 
@@ -289,9 +356,29 @@ while True:
     elif GAME_STATE == "PLAYING":
         todas_as_sprites.draw(tela) # Desenha todas as sprites (Dino, Nuvens, Pista, Cactos)
         todas_as_sprites.update() # Atualiza a lógica de movimento e animação de todas as sprites
+        contador_pontos += 1
+        if contador_pontos >= 10:  # Ajuste aqui para mais lento/rápido
+            pontos += 1
+            contador_pontos = 0
+        for obstaculo in obstacles:
+            if isinstance(obstaculo, Cactus) and not hasattr(obstaculo, "pontuado"):
+                if obstaculo.rect.right < dino.rect.left:  # Passou do Dino
+                    if dino.pulo:  # Dino estava pulando
+                        pontos += 50
+                        obstaculo.pontuado = True
+
+        
+        texto_pontos = exibir_mensagem(f"Pontos: {pontos}", (0, 0, 0), 30)
+        tela.blit(texto_pontos, (largura - 200, 30))
+        texto_recorde = exibir_mensagem(f"Recorde: {recorde}", (100, 100, 100), 24)
+        tela.blit(texto_recorde, (largura - 200, 60))
+
        
         if pygame.sprite.spritecollideany(dino, obstacles):
             GAME_STATE = "GAME_OVER"
+            if pontos > recorde:
+                recorde = pontos
+                print(f"Novo recorde: {recorde} pontos!")
             print("Game Over!")
         
 
@@ -305,5 +392,4 @@ while True:
         todas_as_sprites.update() # Atualiza a lógica de movimento e animação de todas as sprites
         texto_pontos =exibir_mensagem (pontos,40,(0, 0, 0), tela) # Exibe a pontuação na tela
 
-    tela.blit(texto_pontos,(520,30))
     pygame.display.flip()
