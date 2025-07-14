@@ -118,6 +118,20 @@ class Dino(pygame.sprite.Sprite):
             self.pulo = True
             self.velocidade_pulo = self.forca_pulo  # Reseta a velocidade do pulo para a força inicial
 
+    def transformar_em_fossil(self, nova_imagem):
+        self.image = nova_imagem
+        self.rect = self.image.get_rect(center=self.rect.center)
+
+    def resetar_imagens(self):
+        self.imagens_dinossauro = []
+        self.imagens_dinossauro.append(pygame.image.load(os.path.join(diretorio_imagens_dino, 'DinoRun1.png')).convert_alpha())
+        self.imagens_dinossauro.append(pygame.image.load(os.path.join(diretorio_imagens_dino, 'DinoRun2.png')).convert_alpha())
+        self.index_lista = 0
+        self.image = self.imagens_dinossauro[0]
+        self.rect = self.image.get_rect(center=self.rect.center)
+
+      
+
 # == Classes bibibibobobo ==
 def exibir_mensagem(msg, cor, tamanho):
     fonte = pygame.font.SysFont('Arial', tamanho,True, False)
@@ -149,7 +163,8 @@ class Nuvens(pygame.sprite.Sprite):
 class Track(pygame.sprite.Sprite):
     def __init__(self, largura_tela, altura_tela, Track_x):
         super().__init__() #Carrega o chão
-        self.image = pygame.image.load(os.path.join(diretorio_outros_assets, 'Track.png')).convert_alpha()
+        self.image_original = pygame.image.load(os.path.join(diretorio_outros_assets, 'Track.png')).convert_alpha()
+        self.image = self.image_original
         self.rect = self.image.get_rect()
 
         self.rect.x = Track_x  # Começa na posição Track_x
@@ -160,6 +175,14 @@ class Track(pygame.sprite.Sprite):
         self.rect.x -= velocidade_jogo # Use a mesma velocidade das nuvens para manter a consistência
         if self.rect.right < 0:
             self.rect.x += self.image.get_width() * 2 
+
+    def set_image(self, nova_imagem):
+        self.image = nova_imagem
+
+    def reset_image(self):
+        self.image = self.image_original
+
+
 class Cactus(pygame.sprite.Sprite):
     def __init__(self, largura_tela, altura_tela):
         super().__init__()
@@ -239,6 +262,25 @@ todas_as_sprites.add(pista2)
 
 velocidade_jogo = 5  # Começa com velocidade padrão
 
+#outro cenario
+fundo_cenario_alternativo = pygame.image.load(os.path.join(diretorio_outros_assets, 'country-platform.png')).convert_alpha()
+fundo_x1= 0
+fundo_x2 = largura
+
+# Escalar o fundo para o tamanho da tela
+fundo_cenario_alternativo = pygame.transform.scale(fundo_cenario_alternativo, (largura, altura))
+
+# Carregar a imagem da pista original 
+pista_original_imagem = pygame.image.load(os.path.join(diretorio_outros_assets, 'Track.png')).convert_alpha()
+
+# Carregar a imagem do fossil
+novo_dino_imagem = pygame.image.load(os.path.join(diretorio_imagens_dino, 'fossils3.png')).convert_alpha()
+
+
+
+
+velocidade_jogo = 5  # Começa com velocidade padrão
+
 
 
 
@@ -250,6 +292,7 @@ contador_pontos = 0
 # == LOOP PRINCIPAL DO JOGO ==
 while True:
     relogio.tick(60) # Mantém a taxa de quadros (FPS) 
+    global fundo_x1, fundo_x2
 
     # == TRATAMENTO DE EVENTOS ==
     for event in pygame.event.get():
@@ -371,8 +414,6 @@ while True:
         tela.blit(texto_menu, texto_rect_menu)
 
     elif GAME_STATE == "PLAYING":
-        todas_as_sprites.draw(tela) # Desenha todas as sprites (Dino, Nuvens, Pista, Cactos)
-        todas_as_sprites.update() # Atualiza a lógica de movimento e animação de todas as sprites
         contador_pontos += 1
         if contador_pontos >= 10:  # Ajuste aqui para mais lento/rápido
             pontos += 1
@@ -389,6 +430,31 @@ while True:
         tela.blit(texto_pontos, (largura - 200, 30))
         texto_recorde = exibir_mensagem(f"Recorde: {recorde}", (100, 100, 100), 24)
         tela.blit(texto_recorde, (largura - 200, 60))
+
+        if 10 <= pontos < 1300:
+            global fundo_x1, fundo_x2
+            velocidade_fundo = velocidade_jogo
+            fundo_x1 -= velocidade_jogo
+            fundo_x2 -= velocidade_jogo
+            if fundo_x1 + largura < 0:
+                fundo_x1 = fundo_x2 + largura
+            if fundo_x2 + largura < 0:
+                fundo_x2 = fundo_x1 + largura
+            tela.blit(fundo_cenario_alternativo, (fundo_x1, posicao_y_fundo_rolante))
+            tela.blit(fundo_cenario_alternativo, (fundo_x2, posicao_y_fundo_rolante))
+            
+     
+        else:
+            pista1.set_image(pygame.Surface((1,1),pygame.SRCALPHA))
+            pista2.set_image(pygame.Surface((1,1),pygame.SRCALPHA))
+            fundo_x1 = 0
+            fundo_x2 = largura
+            dino.resetar_imagens()  # Reseta o Dino para a imagem original
+            pista1.set_image(pista_original_imagem)
+            pista2.set_image(pista_original_imagem)
+
+        todas_as_sprites.draw(tela) # Desenha todas as sprites (Dino, Nuvens, Pista, Cactos)
+        todas_as_sprites.update() # Atualiza a lógica de movimento e animação de todas as sprites
 
        
         if pygame.sprite.spritecollideany(dino, obstacles):
